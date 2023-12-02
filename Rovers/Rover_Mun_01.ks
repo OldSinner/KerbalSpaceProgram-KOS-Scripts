@@ -3,8 +3,10 @@ clearScreen.
 
 
 //Const Values
-set maxBattery to 1725.
-set NORTHPOLE to latlng( 90, 180).
+set MAXBATTERY to 1725.
+set NORTHPOLE to latlng( 180, 0).
+set SPEEDLIMIT to 6.
+set BREAKSPEEDLIMIT to 9.
 
 //Const Objects
 set panelsStauts to false.
@@ -14,7 +16,7 @@ set opennableSolars to SHIP:partsnamed("solarPanels1").
 //Function of Rover
 declare function BatteryPrc
 {
-    return (ceiling(ship:electriccharge) * 100)/maxBattery.
+    return (ceiling(ship:electriccharge) * 100)/MAXBATTERY.
 }
 
 declare function ToggleSolarPanels
@@ -43,14 +45,31 @@ declare function HybernateForPower{
         print("Detected Low Power " + BatteryPrc).
         ToggleSolarPanels.
         wait 12.
-        until BatteryPrc > 60 {
+        until BatteryPrc > 90 {
             print("Charging... Prc: " + BatteryPrc).
             wait 2.
         }
         ToggleSolarPanels.
         print("Battery Loaded " + BatteryPrc).
-        LOCK WHEELTHROTTLE to 1.
+        MoveForward.
         SET BRAKES TO false.
+    }
+}
+
+declare function MoveForward{
+    if(SHIP:GROUNDSPEED > BREAKSPEEDLIMIT)
+    {
+        SET BRAKES TO true.
+        LOCK WHEELTHROTTLE to 0.
+    }
+    else if(SHIP:GROUNDSPEED > SPEEDLIMIT)
+    {
+        SET BRAKES TO false.
+        LOCK WHEELTHROTTLE to 0.
+    }
+    else{
+        SET BRAKES TO false.
+        LOCK WHEELTHROTTLE to 1.
     }
 }
 
@@ -66,18 +85,16 @@ declare function steerTowardNorth
     else if(northAngle > 30)
     {
         SET BRAKES TO false.
-        LOCK WHEELTHROTTLE to 1.
+        MoveForward.
         lock WHEELSTEERING to NORTHPOLE.
     }
     else
     {
         SET BRAKES TO false.
-        LOCK WHEELTHROTTLE to 1.
+        MoveForward.
         unlock WHEELSTEERING.
     }
 }
-
-
 
 
 MainProgram.
